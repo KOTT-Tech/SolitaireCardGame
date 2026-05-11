@@ -4,7 +4,12 @@ using UnityEngine.EventSystems;
 
 public class CardDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
-    public TextMeshProUGUI nameText;
+    [SerializeField]
+    private TextMeshProUGUI nameText;
+    [SerializeField]
+    private TextMeshProUGUI effectText1;
+    [SerializeField]
+    private TextMeshProUGUI effectText2;
     private CardData cardData;
     private Vector3 originalPosition;
     private bool isSelected = false;
@@ -21,6 +26,8 @@ public class CardDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     {
         cardData = data;
         nameText.text = data.cardName;
+        effectText1.text = data.effectText1;
+        effectText2.text = data.effectText2;
     }
 
     // マウスが乗った時：少し上に移動

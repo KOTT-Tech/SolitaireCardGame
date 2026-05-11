@@ -7,7 +7,8 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     private GameObject detailPanel;
     public TextMeshProUGUI detailNameText;
-    public TextMeshProUGUI detailEffectText;
+    public TextMeshProUGUI detailEffectText1;
+    public TextMeshProUGUI detailEffectText2;
     [SerializeField]
     private GameObject actionPanel; // 「召喚」「発動」ボタンをまとめた親パネル
 
@@ -22,7 +23,8 @@ public class UIManager : MonoBehaviour
     {
         detailPanel.SetActive(true);
         detailNameText.text = data.cardName;
-        detailEffectText.text = data.effectDescription; // CSVに効果列がある前提
+        detailEffectText1.text = data.effectText1;
+        detailEffectText2.text = data.effectText2;
     }
 
     // アクションボタンを表示

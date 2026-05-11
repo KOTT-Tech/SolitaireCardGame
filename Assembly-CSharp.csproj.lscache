@@ -52,10 +52,10 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 [sourceFiles]
 Assets/Scripts/
  CardData.cs
- CSVLoaderScript.cs
  GameControllerScripts/
   CardDisplay.cs
   ChainSystem.cs
+  CSVLoaderScript.cs
   DeckManager.cs
   GameManager.cs
  UIManager.cs
