@@ -29,17 +29,21 @@ public class CSVLoader : MonoBehaviour
 
             // 新しいカードデータを作成し、値を代入（インデックスはExcelの列順に合わせる）
             CardData card = ScriptableObject.CreateInstance<CardData>();
-            card.cardID = values[0]; // カードIDを取得
-            card.actConType1 = values[1]; // カード効果(1)の発動条件
-            card.actCostType1 = values[2]; // カード効果(1)の発動コストの種類
-            card.actCost1 = values[3]; // カード効果(1)の発動コストの数
-            card.effectType1 = values[4]; // カード効果(1)の効果内容の種類
-            card.effect1 = values[5]; // カード効果(1)の効果内容の数
-            card.actConType2 = values[6]; // カード効果(2)の発動条件
-            card.actCostType2 = values[7]; // カード効果(2)の発動コストの種類
-            card.actCost2 = values[8]; // カード効果(2)の発動コストの数
-            card.effectType2 = values[9]; // カード効果(2)の効果内容の種類
-            card.effect2 = values[10]; // カード効果(2)の効果内容の数
+            card.cardID = int.Parse(values[0]); // カードID
+            card.cardName = values[1]; // カード名
+            card.actConType1 = values[2]; // カード効果(1)の発動条件
+            card.actConTarget1 = values[3]; // カード効果(1)の発動コストの対象
+            card.actCostType1 = values[4]; // カード効果(1)の発動コストの種類
+            card.actCost1 = int.Parse(values[5]); // カード効果(1)の発動コストの数
+            card.effectType1 = values[6]; // カード効果(1)の効果内容の種類
+            card.effect1 = int.Parse(values[7]); // カード効果(1)の効果内容の数
+            card.actConType2 = values[8]; // カード効果(2)の発動条件
+            card.actConTarget2 = values[9]; // カード効果(2)の発動コストの対象
+            card.actCostType2 = values[10]; // カード効果(2)の発動コストの種類
+            card.actCost2 = int.Parse(values[11]); // カード効果(2)の発動コストの数
+            card.effectType2 = values[12]; // カード効果(2)の効果内容の種類
+            card.effect2 = int.Parse(values[13]); // カード効果(2)の効果内容の数
+            card.effectDescription = values[14]; // 効果テキスト
 
             deck.Add(card);
         }
