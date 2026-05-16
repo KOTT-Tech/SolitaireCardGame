@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 public enum GameState
 {
-    Setup,      // 初期設定（デッキ構築など）
-    PlayerTurn, // プレイヤーが操作可能な状態
-    Processing, // 連鎖（チェーン）処理中
-    GameClear,  // 勝利（デッキ0枚達成）
-    GameOver    // 終了
+    Setup,
+    PlayerTurn,
+    Processing,
+    GameClear,
+    GameOver
 }
 
 public class GameManager : MonoBehaviour
@@ -17,15 +17,22 @@ public class GameManager : MonoBehaviour
     [Header("Manager References")]
     [SerializeField] private DeckManager deckManager;
     [SerializeField] private ChainSystem chainSystem;
+    [SerializeField] private CSVLoader csvLoader;
+
+    [Header("UI & Fields")]
+    // 🔴 変更：インスペクターから、あらかじめ作成した5つの「マス目オブジェクト（Slot1〜5）」を順番に登録する
+    [SerializeField] private List<Transform> fieldSlots = new List<Transform>(); 
+    [SerializeField] private GameObject fieldCardPrefab; 
 
     [Header("Game Rules")]
     [SerializeField] private int maxFieldSlots = 5;
-    private int remainingSummonRights = 1; // 召喚権（基本1回）
+    private int remainingSummonRights = 1;
 
-    [Header("References")]
-    [SerializeField] private CSVLoader csvLoader;
+    // 🔴 変更：現在どのマス目にどのカードが置かれているかを管理する配列（5枠固定）
+    // 中身が null の場所は「空きマス」と判定します
+    private CardData[] placedCards = new CardData[5];
 
-    public GameState CurrentState { get; private set; }
+    private GameState currentstate;
 
     private void Awake()
     {
@@ -43,7 +50,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void StartGame()
     {
-        CurrentState = GameState.Setup;
+        currentstate = GameState.Setup;
         
         if (csvLoader != null && csvLoader.deck != null) 
         {
@@ -59,7 +66,7 @@ public class GameManager : MonoBehaviour
         deckManager.Shuffle();
         deckManager.DrawCards(5); // 5枚引く
 
-        CurrentState = GameState.PlayerTurn;
+        currentstate = GameState.PlayerTurn;
         Debug.Log("ゲーム開始：手札を確認してください。");
     }
 
@@ -68,7 +75,8 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public bool CanNormalSummon()
     {
-        return CurrentState == GameState.PlayerTurn && remainingSummonRights > 0;
+        // フィールドの空き枠チェックも連動させる
+        return currentstate == GameState.PlayerTurn && remainingSummonRights > 0 && HasEmptySlot();
     }
 
     /// <summary>
@@ -78,14 +86,68 @@ public class GameManager : MonoBehaviour
     {
         if (!CanNormalSummon()) return;
 
+        ChangeState(GameState.Processing);
         remainingSummonRights--;
-        Debug.Log($"{card.cardName} を通常召喚しました。残り召喚権: {remainingSummonRights}");
+        Debug.Log($"{card.cardName} を通常召喚しました。");
+
+        // 🔴 変更：左から空いているマス目を探してカードの見た目を生成する
+        SpawnCardOnFirstEmptySlot(card);
 
         // 連鎖（チェーン）システムにトリガーを送る
-        // 例: OnSummon(召喚時)トリガーの効果をスタックに積む
-        chainSystem.AddChain(card, TriggerType.OnSummon);
+        chainSystem.AddChain(card, TriggerType.召喚したとき);
         
+        if (currentstate == GameState.Processing)
+        {
+            ChangeState(GameState.PlayerTurn);
+        }
         CheckGameState();
+    }
+
+    /// <summary>
+    /// 🔴 新設：左から見て最初に空いているマス目にカードを生成してはめ込む
+    /// </summary>
+    private void SpawnCardOnFirstEmptySlot(CardData card)
+    {
+        if (fieldSlots == null || fieldSlots.Count < maxFieldSlots || fieldCardPrefab == null)
+        {
+            Debug.LogError("GameManager: fieldSlots(5要素必要) または fieldCardPrefab が正しくセットされていません！");
+            return;
+        }
+
+        // 左（インデックス0番）から順番に、データが null（空きマス）の場所を探す
+        for (int i = 0; i < fieldSlots.Count; i++)
+        {
+            if (placedCards[i] == null)
+            {
+                // 空きマスを発見
+                Transform targetSlot = fieldSlots[i];
+
+                // 1. そのマス目の真下（子要素）としてカードを生成
+                GameObject spawnedCard = Instantiate(fieldCardPrefab, targetSlot);
+
+                // 2. カードのサイズと位置をマス目にぴったりフィットさせる（アンカーがストレッチ前提）
+                RectTransform rect = spawnedCard.GetComponent<RectTransform>();
+                if (rect != null)
+                {
+                    rect.anchoredPosition = Vector2.zero;
+                    rect.offsetMin = Vector2.zero;
+                    rect.offsetMax = Vector2.zero;
+                }
+
+                // 3. 生成したカードにデータをセット
+                CardDisplay cardDisplay = spawnedCard.GetComponent<CardDisplay>();
+                if (cardDisplay != null)
+                {
+                    cardDisplay.Setup(card);
+                }
+
+                // 4. データ管理用の配列に記憶させ、このマスを「使用中」にする
+                placedCards[i] = card;
+
+                Debug.Log($"マス目 {i + 1} に {card.cardName} を配置しました。");
+                return; // 配置完了したためループを抜ける
+            }
+        }
     }
 
     /// <summary>
@@ -93,9 +155,12 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public bool HasEmptySlot()
     {
-        // 現在の場にいるカードリストの数をチェック（実装に応じて調整）
-        // return currentFieldCards.Count < maxFieldSlots;
-        return true; 
+        // 🔴 変更：配列の中に1つでも null（空きマス）があれば召喚可能とする
+        for (int i = 0; i < placedCards.Length; i++)
+        {
+            if (placedCards[i] == null) return true;
+        }
+        return false;
     }
 
     /// <summary>
@@ -111,13 +176,17 @@ public class GameManager : MonoBehaviour
 
     private void WinGame()
     {
-        CurrentState = GameState.GameClear;
-        Debug.Log("デッキがなくなりました！");
-        // ここにリザルト画面の表示処理などを追加
+        currentstate = GameState.GameClear;
+        Debug.Log("デッキがなくなりました！ゲームクリア！");
     }
 
     public void ChangeState(GameState newState)
     {
-        CurrentState = newState;
+        currentstate = newState;
+    }
+
+    public void ResetSummonRights()
+    {
+        remainingSummonRights = 1;
     }
 }

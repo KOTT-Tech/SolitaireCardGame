@@ -12,7 +12,6 @@ public class CardDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     private TextMeshProUGUI effectText2;
     private CardData cardData;
     private Vector3 originalPosition;
-    private bool isSelected = false;
 
     // 手札の親オブジェクト（GameManagerなど）への参照
     private UIManager uiManager;
@@ -46,8 +45,13 @@ public class CardDisplay : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     // クリックした時：ボタンを表示
     public void OnPointerClick(PointerEventData eventData)
     {
-        // 左側のテキスト表示を更新
+        if (uiManager == null) return;
+        if (cardData == null) return;
+
+        // 1. 左側のテキスト表示を更新する
         uiManager.ShowCardDetail(cardData);
+        
+        // 2. アクションボタンを表示して追従させる
         uiManager.ShowActionButtons(this.gameObject, cardData);
     }
 }
